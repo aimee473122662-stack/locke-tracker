@@ -1,0 +1,13 @@
+{
+  "name": "洛克王国刷异色记录器",
+  "short_name": "异色记录",
+  "start_url": "/locke-tracker/",
+  "display": "standalone",
+  "background_color": "#e3f2fd",
+  "theme_color": "#42a5f5",
+  "icons": [{
+    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2342a5f5'/><text x='50' y='65' text-anchor='middle' font-size='50'>✨</text></svg>",
+    "sizes": "100x100",
+    "type": "image/svg+xml"
+  }]
+}
