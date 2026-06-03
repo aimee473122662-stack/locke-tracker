@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>洛克王国刷异色记录器</title>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "ZCOOL KuaiLe", "PingFang SC", -apple-system, sans-serif;
+  background: linear-gradient(180deg, #e3f2fd, #bbdefb 15%, #c8e6c9 50%, #dcedc8 85%, #f1f8e9);
+  color: #333; max-width: 480px; margin: 0 auto; min-height: 100vh;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.header {
+  background: linear-gradient(180deg, #64b5f6, #42a5f5);
+  padding: 22px 20px 18px; text-align: center;
+  border-radius: 0 0 24px 24px; box-shadow: 0 4px 16px rgba(66,165,245,0.3);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header h1 { font-size: 19px; font-weight: 800; color: #fff; }
+.header .season-badge {
+  background: rgba(255,255,255,0.25); color: #fff; font-size: 13px;
+  padding: 4px 12px; border-radius: 12px; font-weight: 600;
+}
+.page { display: none; padding-bottom: 40px; }
+.page.active { display: block; }
+.card {
+  background: #fff; border-radius: 18px; padding: 16px;
+  margin: 12px 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.section-title {
+  font-size: 16px; font-weight: 700; color: #333;
+  margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e8f5e9;
+}
+
+/* 精灵球 */
+.ball-item { background: #fafafa; border-radius: 12px; padding: 12px; margin-bottom: 8px; border: 1px solid #f0f0f0; }
+.ball-top { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.ball-top select {
+  flex: 1; font-size: 13px; font-weight: 600; padding: 7px 24px 7px 10px;
+  border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; color: #333;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  cursor: pointer;
+}
+.ball-del { color: #ef5350; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 8px; border: 1px solid #ffcdd2; border-radius: 6px; background: #fff; flex-shrink: 0; }
+.ball-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-bottom: 6px; }
+.ball-col { display: flex; flex-direction: column; }
+.ball-col label { font-size: 11px; color: #999; margin-bottom: 2px; }
+.ball-col input { width: 100%; text-align: center; font-size: 14px; font-weight: 600; color: #333; background: #fff; border: 1.5px solid #e8e8e8; border-radius: 8px; padding: 6px; }
+.ball-col.supp { grid-column: 1/-1; }
+.supp-row { display: flex; align-items: center; gap: 6px; }
+.supp-row input { flex: 1; }
+.supp-row .stepper { display: flex; gap: 4px; }
+.stepper button { width: 28px; height: 28px; border-radius: 8px; border: none; background: #66bb6a; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+.ball-used { display: flex; align-items: center; justify-content: center; background: #e8f5e9; border-radius: 10px; padding: 8px; margin-top: 4px; }
+.ball-used .used-num { font-size: 20px; font-weight: 800; color: #e65100; }
+.bar-bg { height: 5px; background: #f0f0f0; border-radius: 2px; margin-top: 6px; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, #66bb6a, #43a047); border-radius: 2px; }
+.add-ball { text-align: center; color: #42a5f5; font-size: 13px; font-weight: 600; padding: 10px; border: 1.5px dashed #bbdefb; border-radius: 10px; cursor: pointer; margin-top: 4px; }
+
+.timer-display { font-size: 48px; font-weight: 200; text-align: center; font-family: "SF Mono", monospace; letter-spacing: 2px; margin: 6px 0 14px; }
+.timer-btns { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.timer-btns button { font-size: 14px; padding: 10px 18px; border-radius: 22px; border: none; color: #fff; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.btn-start{background:linear-gradient(135deg,#66bb6a,#43a047)}.btn-pause{background:linear-gradient(135deg,#ffa726,#fb8c00)}.btn-resume{background:linear-gradient(135deg,#66bb6a,#43a047)}.btn-end{background:linear-gradient(135deg,#ef5350,#e53935)}
+
+.box-area{display:flex;align-items:center;justify-content:center;gap:12px;}
+.box-center{display:flex;flex-direction:column;align-items:center;padding:14px 40px;border-radius:20px;cursor:pointer;background:linear-gradient(135deg,#fff8e1,#ffe0b2);border:2px dashed #ffa726;min-width:140px;}
+.box-num{font-size:60px;font-weight:800;color:#e65100;line-height:1.1;}
+.box-label{font-size:14px;color:#bf360c;margin-top:4px;}
+.box-btn{width:64px;height:44px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer;color:#fff;}
+.box-minus{background:linear-gradient(135deg,#bdbdbd,#9e9e9e);}
+.box-plus{background:linear-gradient(135deg,#ffa726,#fb8c00);box-shadow:0 2px 8px rgba(255,167,38,0.3);}
+.lowbox-text { display: block; text-align: center; margin-top: 8px; font-size: 12px; color: #ff9800; font-weight: 600; }
+
+.stat-row { display: flex; align-items: center; padding: 10px 6px; border-bottom: 1px solid #f5f5f5; }
+.stat-row:last-child { border-bottom: none; }
+.stat-name { flex: 1; font-size: 14px; font-weight: 500; color: #555; }
+.stat-stepper { display: flex; align-items: center; gap: 8px; }
+.stat-stepper button { width: 26px; height: 26px; border-radius: 8px; border: none; background: #e3f2fd; color: #42a5f5; font-size: 14px; font-weight: 700; cursor: pointer; }
+.stat-num { font-size: 18px; font-weight: 700; color: #333; min-width: 26px; text-align: center; }
+
+.shiny-section { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
+.shiny-section .shiny-hint { font-size: 12px; color: #ff9800; margin-bottom: 6px; font-weight: 600; }
+.shiny-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.shiny-chip { display: flex; align-items: center; gap: 2px; padding: 5px 6px; border-radius: 8px; background: #fafafa; border: 1px solid #eee; }
+.shiny-chip.selected { background: #fff8e1; border-color: #ffd54f; }
+.shiny-chip span { flex: 1; font-size: 11px; color: #666; }
+.shiny-chip.selected span { color: #f57f17; font-weight: 600; }
+.shiny-chip button { width: 20px; height: 20px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; }
+.shiny-plus{background:#e3f2fd;color:#42a5f5}.shiny-minus{background:#f5f5f5;color:#999}
+.shiny-chip .shiny-count { font-size: 14px; font-weight: 700; color: #f57f17; min-width: 16px; text-align: center; }
+
+/* 弹窗 */
+.modal-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 999; }
+.modal { background: #fff; border-radius: 20px; padding: 24px; width: 88%; max-width: 340px; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+.modal h3 { text-align: center; margin-bottom: 14px; font-size: 17px; color: #333; font-weight: 700; }
+.modal p { padding: 4px 0; font-size: 14px; color: #555; border-bottom: 1px solid #f5f5f5; }
+.modal .ball-title { font-weight: 600; color: #333; margin-top: 8px; display: block; font-size: 13px; }
+.modal .commentary { text-align: center; font-size: 15px; padding: 12px; margin: 6px 0; background: #e8f5e9; border-radius: 12px; color: #2e7d32; font-weight: 600; }
+.modal .choice-btns { display: flex; gap: 10px; margin-top: 14px; }
+.modal .choice-btns button { flex: 1; padding: 12px; border: none; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-continue { background: #42a5f5; color: #fff; }
+.btn-garden { background: linear-gradient(135deg, #66bb6a, #43a047); color: #fff; }
+.modal button.close-btn { width: 100%; margin-top: 12px; background: #eee; color: #666; border: none; border-radius: 20px; font-size: 13px; padding: 10px; cursor: pointer; }
+
+/* Garden */
+.garden-tabs { display: flex; gap: 0; margin-bottom: 16px; }
+.garden-tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 2px solid #eee; color: #999; }
+.garden-tab.active { color: #42a5f5; border-bottom-color: #42a5f5; }
+.garden-content { display: none; }
+.garden-content.active { display: block; }
+
+.garden-stat { background: #f5f5f5; border-radius: 12px; padding: 14px; margin-bottom: 8px; }
+.garden-stat .gv { font-size: 28px; font-weight: 800; color: #e65100; }
+.garden-stat .gl { font-size: 13px; color: #888; }
+
+.shiny-record { background: #fafafa; border-radius: 10px; padding: 10px; margin-bottom: 6px; border: 1px solid #eee; }
+.shiny-record .sr-name { font-size: 15px; font-weight: 700; color: #f57f17; cursor: pointer; }
+.shiny-record .sr-detail { display: none; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; }
+.shiny-record .sr-detail.open { display: block; }
+.sr-detail p { font-size: 12px; color: #666; padding: 2px 0; }
+
+.nav-bar { display: flex; padding: 8px 14px; gap: 8px; }
+.nav-bar button { flex: 1; padding: 8px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; background: #e3f2fd; color: #42a5f5; }
+
+.footer { padding: 10px 14px 20px; }
+.footer button { width: 100%; font-size: 13px; color: #aaa; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="season-badge" id="seasonBtn" onclick="switchToGarden()">S2赛季</button>
+  <h1>刷异色记录器</h1>
+  <button class="season-badge" id="gardenBtn" onclick="switchToGarden()">精灵花园</button>
+</div>
+
+<!-- ===== 主页 ===== -->
+<div class="page active" id="pageMain">
+
+<div class="card">
+  <div class="section-title">精灵球统计</div>
+  <div id="ballList"></div>
+  <div class="add-ball" onclick="addBall()">添加精灵球</div>
+</div>
+
+<div class="card">
+  <div class="section-title">计时器</div>
+  <div class="timer-display" id="timer">00:00:00</div>
+  <div class="timer-btns" id="timerBtns">
+    <button class="btn-start" onclick="startTimer()">开始</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">惊喜盒子</div>
+  <div class="box-area">
+    <button class="box-btn box-minus" onclick="changeBox(-1)">-1</button>
+    <div class="box-center" onclick="changeBox(1)">
+      <span class="box-num" id="boxCount">0</span>
+      <span class="box-label">个惊喜盒子</span>
+    </div>
+    <button class="box-btn box-plus" onclick="changeBox(10)">+10</button>
+  </div>
+  <span class="lowbox-text" id="lowbox"></span>
+</div>
+
+<div class="card">
+  <div class="section-title">精灵类型</div>
+  <div id="typeStats"></div>
+</div>
+
+<!-- 异色精灵弹窗 -->
+<div class="modal-mask" id="shinyModal" style="display:none" onclick="closeShinyModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>捕获的异色精灵</h3>
+    <div id="shinyModalGrid"></div>
+    <button class="close-btn" onclick="closeShinyModal()">关闭</button>
+  </div>
+</div>
+
+<div class="footer">
+  <button onclick="resetAll()">全部重置</button>
+</div>
+</div>
+
+<!-- ===== 精灵花园 ===== -->
+<div class="page" id="pageGarden">
+  <div class="nav-bar">
+    <button onclick="switchToMain()">返回记录</button>
+  </div>
+  <div class="card">
+    <div class="section-title">精灵花园 - S2赛季</div>
+    <div class="garden-tabs">
+      <div class="garden-tab active" onclick="switchGardenTab('draw')">抽卡记录</div>
+      <div class="garden-tab" onclick="switchGardenTab('shiny')">异色统计</div>
+      <div class="garden-tab" onclick="switchGardenTab('huabei')">花呗花呗</div>
+    </div>
+
+    <div class="garden-content active" id="tabDraw">
+      <div class="garden-stat">
+        <div class="gl">赛季累计惊喜盒子</div>
+        <div class="gv" id="gBoxCount">0</div>
+      </div>
+      <div class="garden-stat">
+        <div class="gl">平均每只消耗精灵球</div>
+        <div class="gv" id="gAvgBalls">-</div>
+      </div>
+      <div class="garden-stat">
+        <div class="gl">赛季累计消耗精灵球</div>
+        <div class="gv" id="gTotalBalls">0</div>
+      </div>
+    </div>
+
+    <div class="garden-content" id="tabShiny">
+      <div id="gShinyList"></div>
+    </div>
+
+    <div class="garden-content" id="tabHuabei">
+      <div class="garden-stat">
+        <div class="gl">赛季累计消耗精灵球</div>
+        <div class="gv" id="hTotalBalls">0</div>
+      </div>
+      <div class="garden-stat">
+        <div class="gl">赛季累计花费洛克贝</div>
+        <div class="gv" id="hTotalCoins">0<span style="font-size:14px;font-weight:400;color:#888"> w</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 异色详情弹窗 -->
+<div class="modal-mask" id="shinyDetailModal" style="display:none" onclick="this.style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div id="shinyDetailContent"></div>
+    <button class="close-btn" onclick="document.getElementById('shinyDetailModal').style.display='none'">关闭</button>
+  </div>
+</div>
+
+<!-- 总结弹窗 -->
+<div class="modal-mask" id="summaryModal" style="display:none">
+  <div class="modal">
+    <h3>本次刷异色总结</h3>
+    <div id="summaryContent"></div>
+    <div class="choice-btns">
+      <button class="btn-continue" onclick="continueNew()">继续记录</button>
+      <button class="btn-garden" onclick="goToGarden()">进入精灵花园</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BALL_TYPES = ['高级球','奇趣球','棱镜球','条件球','王国球'];
+const SHINY_NAMES = ['小鼓象','猴麦仔','炫光迪迪','烟火团','咕咕帽','牵线木偶','小丑豆豆','加油海葵','护主犬','恶魔叮','小独角兽','灵狐','菊花梨','嘟嘟锅','幽影树'];
+
+function seasonKey() { return 'locke_s2'; }
+
+// season totals
+function loadSeason() {
+  const raw = localStorage.getItem(seasonKey());
+  return raw ? JSON.parse(raw) : { totalBox: 0, totalBalls: 0, totalNormal: 0, totalShiny: 0, totalUnique: 0, totalHybrid: 0, shinies: {} };
+}
+function saveSeason(s) { localStorage.setItem(seasonKey(), JSON.stringify(s)); }
+
+let season = loadSeason();
+let data = {
+  balls: [{id:1,type:'高级球',initial:0,supplement:0,remaining:0}],
+  nextId:2, boxCount:0, normal:0, shiny:0, unique:0, hybrid:0,
+  shinyCaught:{}, timerSec:0, timerRunning:false, timerPaused:false,
+  sessionBalls:0
+};
+let timerInterval=null;
+const types=[
+  {key:'normal',label:'普通精灵'},
+  {key:'shiny',label:'异色精灵'},
+  {key:'unique',label:'奇异精灵'},
+  {key:'hybrid',label:'混血精灵'}
+];
+
+function beijingTime() {
+  const fmt = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  });
+  const parts = fmt.formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t)?.value || '';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+}
+
+function saveSession() {
+  localStorage.setItem('locke_session', JSON.stringify({
+    balls: data.balls, nextId: data.nextId, boxCount: data.boxCount,
+    normal: data.normal, shiny: data.shiny, unique: data.unique, hybrid: data.hybrid,
+    shinyCaught: data.shinyCaught, sessionBalls: data.sessionBalls
+  }));
+}
+function loadSession() {
+  const raw = localStorage.getItem('locke_session');
+  if (!raw) return;
+  const d = JSON.parse(raw);
+  data.balls = (d.balls||[]).map(b=>({id:b.id,type:b.type||b.name||'高级球',initial:b.initial||0,supplement:b.supplement||0,remaining:b.remaining||0}));
+  if(!data.balls.length)data.balls=[{id:1,type:'高级球',initial:0,supplement:0,remaining:0}];
+  data.nextId=d.nextId||Math.max(...data.balls.map(b=>b.id))+1;
+  data.boxCount=d.boxCount||0;data.normal=d.normal||0;data.shiny=d.shiny||0;data.unique=d.unique||0;data.hybrid=d.hybrid||0;
+  data.shinyCaught=d.shinyCaught||{};data.sessionBalls=d.sessionBalls||0;
+}
+
+function ballType(t){return BALL_TYPES.includes(t)?t:'高级球';}
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ==== RENDER ====
+function renderBalls(){
+  document.getElementById('ballList').innerHTML=data.balls.map(b=>{
+    b.type=ballType(b.type);const used=b.initial+b.supplement-b.remaining;
+    const total=b.initial+b.supplement;
+    const pct=total>0?Math.min(100,Math.max(0,(used/total)*100)):0;
+    const opts=BALL_TYPES.map(t=>`<option value="${t}" ${t===b.type?'selected':''}>${t}</option>`).join('');
+    return `<div class="ball-item"><div class="ball-top"><select onchange="changeBallType(${b.id},this.value)">${opts}</select><span class="ball-del" onclick="deleteBall(${b.id})">删除</span></div>
+      <div class="ball-grid"><div class="ball-col"><label>初始数量</label><input type="number" value="${b.initial}" onchange="setBallNum(${b.id},'initial',this.value)"></div>
+      <div class="ball-col"><label>剩余数量</label><input type="number" value="${b.remaining}" onchange="setBallNum(${b.id},'remaining',this.value)"></div></div>
+      <div class="ball-col supp"><label>补充数量</label><div class="supp-row"><input type="number" value="${b.supplement}" onchange="setBallNum(${b.id},'supplement',this.value)"><div class="stepper"><button onclick="addSupplement(${b.id},-1)">-</button><button onclick="addSupplement(${b.id},1)">+</button></div></div></div>
+      <div class="ball-used"><span>使用: </span><span class="used-num">${used}</span><span style="font-size:11px;color:#999;margin-left:4px">(${b.initial}+${b.supplement}-${b.remaining})</span></div></div>`;
+  }).join('');
+}
+function renderTypes(){
+  document.getElementById('typeStats').innerHTML=types.map(t=>`<div class="stat-row"><span class="stat-name">${t.label}</span><div class="stat-stepper"><button onclick="changeType('${t.key}',-1)">-</button><span class="stat-num">${data[t.key]}</span><button onclick="changeType('${t.key}',1)">+</button></div></div>`).join('');
+}
+function showShinyModal(){
+  document.getElementById('shinyModalGrid').innerHTML=SHINY_NAMES.map(n=>{const c=data.shinyCaught[n]||0;return`<div class="shiny-chip${c?' selected':''}"><button class="shiny-minus" onclick="catchShiny('${n}',-1)">-</button><span>${n}</span><span class="shiny-count">${c||''}</span><button class="shiny-plus" onclick="catchShiny('${n}',1)">+</button></div>`;}).join('');
+  document.getElementById('shinyModal').style.display='flex';
+}
+function closeShinyModal(){document.getElementById('shinyModal').style.display='none';}
+
+// ==== BALLS ====
+function addBall(){data.balls.push({id:data.nextId,type:'高级球',initial:0,supplement:0,remaining:0});data.nextId++;renderBalls();saveSession();}
+function deleteBall(id){if(data.balls.length<=1)return;data.balls=data.balls.filter(b=>b.id!==id);renderBalls();saveSession();}
+function changeBallType(id,type){const b=data.balls.find(b=>b.id===id);if(b){b.type=type;saveSession();}}
+function setBallNum(id,field,val){const b=data.balls.find(b=>b.id===id);if(b){b[field]=Math.max(0,parseInt(val)||0);renderBalls();saveSession();}}
+function addSupplement(id,delta){const b=data.balls.find(b=>b.id===id);if(b){b.supplement=Math.max(0,b.supplement+delta);renderBalls();saveSession();}}
+
+// ==== TIMER ====
+function formatTime(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
+function startTimer(){if(data.timerRunning||data.timerPaused)return;data.timerRunning=true;timerInterval=setInterval(()=>{data.timerSec++;document.getElementById('timer').textContent=formatTime(data.timerSec);},1000);document.getElementById('timerBtns').innerHTML='<button class="btn-pause" onclick="pauseTimer()">暂停</button><button class="btn-end" onclick="endTimer()">结束</button>';}
+function pauseTimer(){clearInterval(timerInterval);data.timerRunning=false;data.timerPaused=true;document.getElementById('timerBtns').innerHTML='<button class="btn-resume" onclick="resumeTimer()">继续</button><button class="btn-end" onclick="endTimer()">结束</button>';}
+function resumeTimer(){data.timerRunning=true;data.timerPaused=false;timerInterval=setInterval(()=>{data.timerSec++;document.getElementById('timer').textContent=formatTime(data.timerSec);},1000);document.getElementById('timerBtns').innerHTML='<button class="btn-pause" onclick="pauseTimer()">暂停</button><button class="btn-end" onclick="endTimer()">结束</button>';}
+
+function getCommentary(sec,shiny){
+  const m=sec/60;
+  if(!shiny)return'这次没出异色，下次一定闪！';
+  if(m<10)return'欧皇降临！光速出闪！';
+  if(m<30)return'运气爆棚，王国之光眷顾你！';
+  if(m<60)return'人品不错，继续保持！';
+  if(m<120)return'勤勉的小洛克，终有回报！';
+  if(m<180)return'有点非了，去洗把脸吧~';
+  return'非洲大酋长...换个时辰再战！';
+}
+
+function endTimer(){
+  clearInterval(timerInterval);
+  const elapsed=data.timerSec;
+  // calculate session balls used
+  const used = data.balls.reduce((sum,b)=>sum+b.initial+b.supplement-b.remaining,0);
+  data.sessionBalls = used;
+  data.timerRunning=false;data.timerPaused=false;data.timerSec=0;
+  document.getElementById('timer').textContent='00:00:00';
+  document.getElementById('timerBtns').innerHTML='<button class="btn-start" onclick="startTimer()">开始</button>';
+
+  const cmt=getCommentary(elapsed,data.shiny);
+  let h=`<div class="commentary">${cmt}</div>`;
+  h+=`<p>用时：${formatTime(elapsed)}</p><p>惊喜盒子：${data.boxCount} 个</p>`;
+  h+=`<p>普通：${data.normal} | 异色：${data.shiny} | 奇异：${data.unique} | 混血：${data.hybrid}</p>`;
+  h+=`<p>本次消耗精灵球：${used} 个</p>`;
+
+  const caught=Object.entries(data.shinyCaught).filter(([,c])=>c>0);
+  if(caught.length){h+='<span class="ball-title">捕获的异色精灵：</span>';caught.forEach(([n,c])=>{h+=`<p>${escapeHtml(n)}：${c} 只</p>`;});}
+  document.getElementById('summaryContent').innerHTML=h;
+  document.getElementById('summaryModal').style.display='flex';
+}
+
+function continueNew(){
+  // accumulate to season
+  const used = data.sessionBalls;
+  season.totalBox += data.boxCount;
+  season.totalBalls += used;
+  season.totalNormal += data.normal;
+  season.totalShiny += data.shiny;
+  season.totalUnique += data.unique;
+  season.totalHybrid += data.hybrid;
+
+  // record shiny captures
+  Object.entries(data.shinyCaught).forEach(([name,cnt])=>{
+    if(!cnt)return;
+    if(!season.shinies[name]) season.shinies[name] = { count: 0, captures: [] };
+    season.shinies[name].count += cnt;
+    season.shinies[name].captures.push({
+      time: beijingTime(), balls: used, coins: Math.round(used*1.2*100)/100
+    });
+  });
+
+  saveSeason(season);
+
+  // reset session
+  data = {
+    balls: [{id:1,type:'高级球',initial:0,supplement:0,remaining:0}],
+    nextId:2, boxCount:0, normal:0, shiny:0, unique:0, hybrid:0,
+    shinyCaught:{}, timerSec:0, timerRunning:false, timerPaused:false,
+    sessionBalls:0
+  };
+  localStorage.removeItem('locke_session');
+  renderBalls();renderTypes();
+  document.getElementById('boxCount').textContent='0';
+  document.getElementById('lowbox').textContent='';
+  document.getElementById('summaryModal').style.display='none';
+}
+
+function goToGarden(){
+  continueNew();
+  document.getElementById('summaryModal').style.display='none';
+  switchToGarden();
+}
+
+// ==== BOX ====
+function changeBox(delta){data.boxCount=Math.max(0,data.boxCount+delta);document.getElementById('boxCount').textContent=data.boxCount;updateLowbox();saveSession();}
+function updateLowbox(){const r=80-data.boxCount;document.getElementById('lowbox').textContent=r>0?`距离低保还有 ${r} 个盒子`:'';}
+
+// ==== TYPES ====
+function changeType(key,delta){
+  const wasShiny = data.shiny;
+  data[key]=Math.max(0,data[key]+delta);
+  if(key==='shiny' && data.shiny > wasShiny){
+    showShinyModal();
+  }
+  renderTypes();saveSession();
+}
+
+// ==== SHINY CATCH ====
+function catchShiny(name,delta){
+  data.shinyCaught[name]=Math.max(0,(data.shinyCaught[name]||0)+delta);
+  showShinyModal();saveSession();
+}
+
+// ==== GARDEN ====
+function switchToGarden(){
+  document.getElementById('pageMain').classList.remove('active');
+  document.getElementById('pageGarden').classList.add('active');
+  renderGarden();
+}
+function switchToMain(){
+  document.getElementById('pageGarden').classList.remove('active');
+  document.getElementById('pageMain').classList.add('active');
+}
+
+function switchGardenTab(tab){
+  document.querySelectorAll('.garden-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.garden-content').forEach(c=>c.classList.remove('active'));
+  event.target.classList.add('active');
+  const map={draw:'tabDraw',shiny:'tabShiny',huabei:'tabHuabei'};
+  document.getElementById(map[tab]).classList.add('active');
+}
+
+function renderGarden(){
+  season = loadSeason();
+  document.getElementById('gBoxCount').textContent = season.totalBox;
+  document.getElementById('gTotalBalls').textContent = season.totalBalls;
+  const avg = season.totalBox > 0 ? (season.totalBalls / season.totalBox).toFixed(1) : '-';
+  document.getElementById('gAvgBalls').textContent = avg;
+
+  // huabei
+  document.getElementById('hTotalBalls').textContent = season.totalBalls;
+  document.getElementById('hTotalCoins').innerHTML = (season.totalBalls * 1.2).toFixed(0) + '<span style="font-size:14px;font-weight:400;color:#888"> w</span>';
+
+  // shiny list
+  const entries = Object.entries(season.shinies||{}).filter(([,v])=>v.count>0);
+  const list = document.getElementById('gShinyList');
+  if(!entries.length){ list.innerHTML='<p style="color:#999;text-align:center;padding:20px">暂无记录</p>'; return; }
+  list.innerHTML = entries.map(([name,v])=>`
+    <div class="shiny-record">
+      <div class="sr-name" data-name="${escapeHtml(name)}" onclick="showShinyDetail(this.dataset.name)">${escapeHtml(name)} (${v.count}只) ></div>
+    </div>
+  `).join('');
+}
+
+function showShinyDetail(name) {
+  const v = (season.shinies||{})[name];
+  if (!v) return;
+  let h = `<h3>${escapeHtml(name)} — 共 ${v.count} 只</h3>`;
+  v.captures.forEach(c => {
+    h += `<p>${c.time} | 消耗 ${c.balls} 球 | 花费 ${c.coins}w 洛克币</p>`;
+  });
+  document.getElementById('shinyDetailContent').innerHTML = h;
+  document.getElementById('shinyDetailModal').style.display = 'flex';
+}
+
+// ==== RESET ====
+function resetAll(){
+  if(!confirm('确定清除所有记录？(不会清除赛季数据)'))return;
+  clearInterval(timerInterval);
+  data={balls:[{id:1,type:'高级球',initial:0,supplement:0,remaining:0}],nextId:2,boxCount:0,normal:0,shiny:0,unique:0,hybrid:0,shinyCaught:{},timerSec:0,timerRunning:false,timerPaused:false,sessionBalls:0};
+  localStorage.removeItem('locke_session');
+  renderBalls();renderTypes();document.getElementById('boxCount').textContent='0';document.getElementById('timer').textContent='00:00:00';
+  document.getElementById('timerBtns').innerHTML='<button class="btn-start" onclick="startTimer()">开始</button>';
+  document.getElementById('lowbox').textContent='';
+}
+
+// ==== INIT ====
+loadSession();
+renderBalls();renderTypes();
+document.getElementById('boxCount').textContent=data.boxCount;
+updateLowbox();
+</script>
+</body>
+</html>
