@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.json">
-<title>洛克王国刷异色记录器</title>
+<title>百分之零的手帐</title>
 <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -132,21 +132,38 @@ body {
 
 .footer { padding: 10px 14px 20px; }
 .footer button { width: 100%; font-size: 13px; color: #aaa; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px; cursor: pointer; }
+
+/* 速写 */
+.snap-item { display:flex;align-items:center;padding:8px 10px;border-radius:10px;background:#f8f9fc;margin-bottom:6px;gap:6px }
+.snap-info { flex:1;min-width:0 }
+.snap-name { font-size:13px;font-weight:600;color:#333 }
+.snap-time { font-size:11px;color:#999 }
+.snap-stats { font-size:11px;color:#666;margin-top:1px }
+.snap-actions { display:flex;gap:4px;flex-shrink:0 }
+.snap-btn { width:28px;height:28px;border-radius:8px;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1 }
+.snap-load { background:#e3f2fd;color:#42a5f5 }
+.snap-del { background:#ffebee;color:#ef5350 }
+.btn-save-snap { background:linear-gradient(135deg,#66bb6a,#43a047);color:#fff;border:none;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.1) }
+.btn-snap-top { background:#fff;color:#42a5f5;border:1.5px solid #bbdefb;padding:4px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer }
+.snap-modal .snap-list { max-height:50vh;overflow-y:auto;margin:8px 0 }
 </style>
 </head>
 <body>
 
 <div class="header">
   <button class="season-badge" id="seasonBtn" onclick="switchToGarden()">S2赛季</button>
-  <h1>刷异色记录器</h1>
-  <button class="season-badge" id="gardenBtn" onclick="switchToGarden()">精灵花园</button>
+  <h1>百分之零的手帐</h1>
+   <button class="season-badge" id="gardenBtn" onclick="switchToGarden()">精灵手记</button>
 </div>
 
 <!-- ===== 主页 ===== -->
 <div class="page active" id="pageMain">
 
 <div class="card">
-  <div class="section-title">精灵球统计</div>
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>精灵球统计</span>
+    <button class="btn-snap-top" onclick="openSnapshot()">速写</button>
+  </div>
   <div id="ballList"></div>
   <div class="add-ball" onclick="addBall()">添加精灵球</div>
 </div>
@@ -186,6 +203,16 @@ body {
   </div>
 </div>
 
+<!-- 速写弹窗 -->
+<div class="modal-mask snap-modal" id="snapModal" style="display:none" onclick="document.getElementById('snapModal').style.display='none'">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>速写</h3>
+    <button class="btn-save-snap" style="width:100%;margin-bottom:10px" onclick="saveSnapshot()">保存当前速写</button>
+    <div class="snap-list" id="snapList"></div>
+    <button class="close-btn" onclick="document.getElementById('snapModal').style.display='none'">关闭</button>
+  </div>
+</div>
+
 <div class="footer">
   <button onclick="resetAll()">全部重置</button>
 </div>
@@ -197,7 +224,7 @@ body {
     <button onclick="switchToMain()">返回记录</button>
   </div>
   <div class="card">
-    <div class="section-title">精灵花园 - S2赛季</div>
+    <div class="section-title">精灵手记 - S2赛季</div>
     <div class="garden-tabs">
       <div class="garden-tab active" onclick="switchGardenTab('draw')">抽卡记录</div>
       <div class="garden-tab" onclick="switchGardenTab('shiny')">异色统计</div>
@@ -251,13 +278,13 @@ body {
     <div id="summaryContent"></div>
     <div class="choice-btns">
       <button class="btn-continue" onclick="continueNew()">继续记录</button>
-      <button class="btn-garden" onclick="goToGarden()">进入精灵花园</button>
+      <button class="btn-garden" onclick="goToGarden()">进入精灵手记</button>
     </div>
   </div>
 </div>
 
 <script>
-const BALL_TYPES = ['高级球','奇趣球','棱镜球','条件球','王国球'];
+const BALL_TYPES = ['高级球','奇趣球','棱镜球','条件球','国王球'];
 const SHINY_NAMES = ['小鼓象','猴麦仔','炫光迪迪','烟火团','咕咕帽','牵线木偶','小丑豆豆','加油海葵','护主犬','恶魔叮','小独角兽','灵狐','菊花梨','嘟嘟锅','幽影树'];
 
 function seasonKey() { return 'locke_s2'; }
@@ -496,6 +523,61 @@ function showShinyDetail(name) {
   });
   document.getElementById('shinyDetailContent').innerHTML = h;
   document.getElementById('shinyDetailModal').style.display = 'flex';
+}
+
+// ==== SNAPSHOT ====
+function openSnapshot(){
+  renderSnapshots();
+  document.getElementById('snapModal').style.display='flex';
+}
+
+function saveSnapshot(){
+  const name = prompt('给速写起个名字：', beijingTime());
+  if(!name) return;
+  const snaps = JSON.parse(localStorage.getItem('locke_snaps')||'[]');
+  snaps.push({
+    id: Date.now(), name, time: beijingTime(),
+    balls: JSON.parse(JSON.stringify(data.balls))
+  });
+  localStorage.setItem('locke_snaps', JSON.stringify(snaps));
+  renderSnapshots();
+}
+
+function loadSnapshot(id){
+  if(!confirm('加载速写会覆盖当前记录，确定吗？')) return;
+  const snaps = JSON.parse(localStorage.getItem('locke_snaps')||'[]');
+  const s = snaps.find(x=>x.id===id);
+  if(!s) return;
+  // 以剩余数量作为新的初始值，其他归零
+  data.balls = s.balls.map(b=>({
+    ...b,
+    initial: b.remaining,
+    supplement: 0,
+    remaining: 0
+  }));
+  data.nextId = Math.max(...s.balls.map(b=>b.id),0)+1;
+  renderBalls();
+  document.getElementById('snapModal').style.display='none';
+  saveSession();
+}
+
+function deleteSnapshot(id){
+  if(!confirm('删除这个速写？')) return;
+  let snaps = JSON.parse(localStorage.getItem('locke_snaps')||'[]');
+  snaps = snaps.filter(x=>x.id!==id);
+  localStorage.setItem('locke_snaps', JSON.stringify(snaps));
+  renderSnapshots();
+}
+
+function renderSnapshots(){
+  const snaps = JSON.parse(localStorage.getItem('locke_snaps')||'[]');
+  const el = document.getElementById('snapList');
+  if(!snaps.length){ el.innerHTML='<p style="color:#ccc;text-align:center;padding:10px;font-size:12px">暂无速写，保存后可随时恢复</p>'; return; }
+  el.innerHTML = snaps.slice().reverse().map(s=>{
+    const total = (s.balls||[]).reduce((a,b)=>a+b.initial+b.supplement,0);
+    const used = (s.balls||[]).reduce((a,b)=>a+b.initial+b.supplement-b.remaining,0);
+    return '<div class="snap-item"><div class="snap-info"><div class="snap-name">'+escapeHtml(s.name)+'</div><div class="snap-time">'+s.time+'</div><div class="snap-stats">剩余 '+(total-used)+' 球</div></div><div class="snap-actions"><button class="snap-btn snap-load" onclick="loadSnapshot('+s.id+')">📥</button><button class="snap-btn snap-del" onclick="deleteSnapshot('+s.id+')">🗑</button></div></div>';
+  }).join('');
 }
 
 // ==== RESET ====
